@@ -9,46 +9,56 @@ public class WordNetReader {
 
     public DirectedGraph dg;
     private final HashMap<Integer, HashSet<String>> IDMapToSynsets;
-    private final HashMap<HashSet<String>, Integer> synsetsMapToID;
+    private final String SYNSETS_FILE;
+    private final String HYPONYMS_FILE;
 
     public WordNetReader() {
+        SYNSETS_FILE = Global.synsetFile;
+        HYPONYMS_FILE = Global.hyponymFile;
         IDMapToSynsets = new HashMap<>();
-        synsetsMapToID = new HashMap<>();
         readSynsetsHelper();
         dg = new DirectedGraph(IDMapToSynsets.size());
         readHyponymsHelper();
     }
 
-    public String hyponyms(String word) {
+    public String hyponyms(List<String> words) {
+        HashSet<String> hs = new HashSet<>(hyponymsForOneWord(words.getFirst()));
+        for (String s : words) {
+            hs.retainAll(hyponymsForOneWord(s));
+        }
+        List<String> result = new ArrayList<>(hs);
+        Collections.sort(result);
+        return "[" + String.join(", ", result) + "]";
+    }
+
+    public HashSet<String> hyponymsForOneWord(String word) {
+        HashSet<String> result = new HashSet<>();
         HashSet<Integer> id;
         id = containsSynsets(word);
         if (id.isEmpty()) {
-            return "[]";
+            return result;
         }
         HashSet<Integer> hs = new HashSet<>();
         for (Integer i : id) {
             hs.addAll(dg.traverse(i));
         }
-        TreeSet<String> ts = new TreeSet<>();
         for (Integer i : hs) {
-            ts.addAll(IDMapToSynsets.get(i));
+            result.addAll(IDMapToSynsets.get(i));
         }
-        List<String> list = new ArrayList<>(ts);
-        return "[" + String.join(", ", list) + "]";
+        return result;
     }
 
     private HashSet<Integer> containsSynsets(String word) {
         HashSet<Integer> result = new HashSet<>();
-        for (HashSet<String> hs : synsetsMapToID.keySet()) {
-            if (hs.contains(word)) {
-                result.add(synsetsMapToID.get(hs));
+        for (Integer i : IDMapToSynsets.keySet()) {
+            if (IDMapToSynsets.get(i).contains(word)) {
+                result.add(i);
             }
         }
         return result;
     }
 
     private void readSynsetsHelper() {
-        String SYNSETS_FILE = "./data/wordnet/synsets16.txt";
 
         In in = new In(SYNSETS_FILE);
         while (!in.isEmpty()) {
@@ -56,13 +66,11 @@ public class WordNetReader {
             String[] splitLine = nextLine.split(",");
             String[] synonyms = splitLine[1].split(" ");
             HashSet<String> hs = new HashSet<>(Arrays.asList(synonyms));
-            synsetsMapToID.put(hs, Integer.parseInt(splitLine[0]));
             IDMapToSynsets.put(Integer.parseInt(splitLine[0]), hs);
         }
     }
 
     private void readHyponymsHelper() {
-        String HYPONYMS_FILE = "./data/wordnet/hyponyms16.txt";
 
         In in = new In(HYPONYMS_FILE);
         while (!in.isEmpty()) {

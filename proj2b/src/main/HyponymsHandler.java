@@ -13,7 +13,7 @@ public class HyponymsHandler extends NgordnetQueryHandler {
 
     @Override
     public String handle(NgordnetQuery q) {
-        String result = wr.hyponyms(q.words().getFirst());
+        String result = wr.hyponyms(q.words());
         System.out.println(result);
         return result;
     }

@@ -9,6 +9,9 @@ public class AutograderBuddy {
             String wordFile, String countFile,
             String synsetFile, String hyponymFile) {
 
-        throw new RuntimeException("Please fill out AutograderBuddy.java!");
+//        throw new RuntimeException("Please fill out AutograderBuddy.java!");
+            Global.synsetFile = synsetFile;
+            Global.hyponymFile = hyponymFile;
+            return new HyponymsHandler();
     }
 }
